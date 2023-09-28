@@ -120,7 +120,7 @@ void FractalViewer::Generate(int x, int y, int width, int height)
 
 	auto end = std::chrono::high_resolution_clock::now();
 	auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-	//std::cout << "Took " << (diff / 1000.0) << "ms to generate\n";
+	std::cout << "Took " << (diff / 1000.0) << "ms to generate\n";
 
 	SDL_UnlockTexture(texture);
 }
@@ -250,7 +250,7 @@ void FractalViewer::Menu()
 			{
 				fractal_type = static_cast<FractalType>(fractal_idx);
 				BuildFractalGenerator();
-				Generate();
+				regenerate = true;
 			}
 		}
 		ImGui::TreePop();
@@ -260,37 +260,37 @@ void FractalViewer::Menu()
 	ImGui::PushItemWidth(160.0f);
 
 	if (ImGui::InputDouble("X", &position_x, 0.0, 0.0, double_format, ImGuiInputTextFlags_EnterReturnsTrue))
-		Generate();
+		regenerate = true;
 
 	if (ImGui::InputDouble("Y", &position_y, 0.0, 0.0, double_format, ImGuiInputTextFlags_EnterReturnsTrue))
-		Generate();
+		regenerate = true;
 
 	if (ImGui::InputDouble("Zoom", &zoom, 0.0, 0.0, double_format, ImGuiInputTextFlags_EnterReturnsTrue))
-		Generate();
+		regenerate = true;
 
 	ImGui::NewLine();
 
 	if (ImGui::InputInt("Escape Max Iterations", &max_iterations, 0, 100, ImGuiInputTextFlags_EnterReturnsTrue))
-		Generate();
+		regenerate = true;
 
 	if (ImGui::SliderInt("##slider-maxiterations", &max_iterations, 2, 2048))
-		Generate();
+		regenerate = true;
 
 	ImGui::NewLine();
 
 	if (ImGui::TreeNodeEx("Color", ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		if (ImGui::InputFloat("Color Scale", &color_scale, 0.01f, 0.1f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
-			Generate();
+			regenerate = true;
 
 		if (ImGui::InputInt("R Offset", &offset_r, 1, 10, ImGuiInputTextFlags_EnterReturnsTrue))
-			Generate();
+			regenerate = true;
 
 		if (ImGui::InputInt("G Offset", &offset_g, 1, 10, ImGuiInputTextFlags_EnterReturnsTrue))
-			Generate();
+			regenerate = true;
 
 		if (ImGui::InputInt("B Offset", &offset_b, 1, 10, ImGuiInputTextFlags_EnterReturnsTrue))
-			Generate();
+			regenerate = true;
 
 		ImGui::TreePop();
 	}
@@ -311,12 +311,12 @@ void FractalViewer::Menu()
 				const char* name = variable.name.c_str();
 
 				if (ImGui::InputDouble(name, &variable.value, variable.min, variable.max, "%.6f", ImGuiInputTextFlags_EnterReturnsTrue))
-					Generate();
+					regenerate = true;
 
 				std::string temp_slider_name = "##slider" + std::to_string(i);
 
 				if (ImGui::SliderScalar(temp_slider_name.c_str(), ImGuiDataType_Double, &variable.value, &variable.min, &variable.max, "%.6f"))
-					Generate();
+					regenerate = true;
 
 				ImGui::NewLine();
 			}
@@ -348,6 +348,8 @@ void FractalViewer::Run()
 		Uint32 mouse_state = SDL_GetMouseState(&mouse_x, &mouse_y);
 		left_mouse_down = (mouse_state & SDL_BUTTON_LEFT);
 
+		regenerate = false;
+
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
@@ -367,7 +369,7 @@ void FractalViewer::Run()
 					CreateTexture(window_width, window_height);
 					CreateOutputBuffer(window_width, window_height);
 
-					Generate();
+					regenerate = true;
 				}
 			}
 			else if (event.type == SDL_KEYDOWN)
@@ -384,7 +386,7 @@ void FractalViewer::Run()
 				{
 				case SDLK_r:
 					ResetFractal();
-					Generate();
+					regenerate = true;
 					break;
 				case SDLK_w:
 					Pan(0, -pan_amount);
@@ -397,6 +399,15 @@ void FractalViewer::Run()
 					break;
 				case SDLK_d:
 					Pan(pan_amount, 0);
+					break;
+				case SDLK_EQUALS:
+				case SDLK_PLUS:
+					zoom *= zoom_per_scroll;
+					regenerate = true;
+					break;
+				case SDLK_MINUS:
+					zoom /= zoom_per_scroll;
+					regenerate = true;
 					break;
 				}
 			}
@@ -421,7 +432,7 @@ void FractalViewer::Run()
 					position_y -= zoom * ((2.0 * (double)mouse_y - (double)window_height) * (1.0 - zoom_amount)) / 2.0;
 				}
 
-				Generate();
+				regenerate = true;
 			}
 		}
 
@@ -433,7 +444,6 @@ void FractalViewer::Run()
 		prev_mouse_x = mouse_x;
 		prev_mouse_y = mouse_y;
 
-
 		ImGui_ImplSDLRenderer2_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
@@ -441,6 +451,9 @@ void FractalViewer::Run()
 		Menu();
 
 		ImGui::Render();
+
+		if (regenerate)
+			Generate();
 
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);

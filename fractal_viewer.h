@@ -61,6 +61,7 @@ private:
 
 	const double zoom_per_scroll = 0.90;
 	const int pan_amount = 10;
+	bool regenerate = false;
 
 	bool menu_open = true;
 	const char* double_format = "%.17f";
