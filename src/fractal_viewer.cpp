@@ -376,7 +376,7 @@ void FractalViewer::Run()
 			}
 			else if (event.type == SDL_KEYDOWN)
 			{
-				int key = event.key.keysym.sym;
+				const int key = event.key.keysym.sym;
 
 				if (key == SDLK_TAB)
 					menu_open = !menu_open;
@@ -421,10 +421,13 @@ void FractalViewer::Run()
 					break;
 
 				double zoom_amount = std::pow(zoom_per_scroll, std::abs(event.wheel.y));
+				double delta_x = zoom * ((2.0 * static_cast<double>(mouse_x) - static_cast<double>(window_width)) * (1.0 - zoom_amount)) / 2.0;
+				double delta_y = zoom * ((2.0 * static_cast<double>(mouse_y) - static_cast<double>(window_height)) * (1.0 - zoom_amount)) / 2.0;
+
 				if (event.wheel.y > 0) // Mouse wheel up, zoom in
 				{
-					position_x += zoom * ((2.0 * static_cast<double>(mouse_x) - static_cast<double>(window_width)) * (1.0 - zoom_amount)) / 2.0;
-					position_y += zoom * ((2.0 * static_cast<double>(mouse_y) - static_cast<double>(window_height)) * (1.0 - zoom_amount)) / 2.0;
+					position_x += delta_x;
+					position_y += delta_y;
 
 					zoom *= zoom_amount;
 				}
@@ -432,8 +435,8 @@ void FractalViewer::Run()
 				{
 					zoom /= zoom_amount;
 
-					position_x -= zoom * ((2.0 * static_cast<double>(mouse_x) - static_cast<double>(window_width)) * (1.0 - zoom_amount)) / 2.0;
-					position_y -= zoom * ((2.0 * static_cast<double>(mouse_y) - static_cast<double>(window_height)) * (1.0 - zoom_amount)) / 2.0;
+					position_x -= delta_x;
+					position_y -= delta_y;
 				}
 
 				regenerate = true;
