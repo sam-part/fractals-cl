@@ -1,11 +1,8 @@
 #pragma once
 
-#include <CL/cl.hpp>
+#include <CL/opencl.hpp>
 #include <SDL2/SDL.h>
 #include "fractals.h"
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_sdl2.h"
-#include "imgui/imgui_impl_sdlrenderer2.h"
 
 class FractalViewer
 {

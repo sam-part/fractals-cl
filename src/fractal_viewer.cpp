@@ -1,5 +1,8 @@
 #include "fractal_viewer.h"
 #include "cl_helper.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl2.h"
+#include "imgui/imgui_impl_sdlrenderer2.h"
 #include <iostream>
 #include <chrono>
 
@@ -461,7 +464,7 @@ void FractalViewer::Run()
 		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 
 		if(menu_open)
-			ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
+			ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
 
 		SDL_RenderPresent(renderer);
 	}
