@@ -86,7 +86,7 @@ void FractalViewer::Generate(int x, int y, int width, int height)
 
 	Uint32* pixels = nullptr;
 	int pitch = 0;
-	SDL_LockTexture(texture, nullptr, (void**)&pixels, &pitch);
+	SDL_LockTexture(texture, nullptr, reinterpret_cast<void**>(&pixels), &pitch);
 
 	fractal_settings = { max_iterations, window_width, window_height };
 	position_info = { zoom, position_x, position_y };
@@ -123,7 +123,7 @@ void FractalViewer::Generate(int x, int y, int width, int height)
 
 	auto end = std::chrono::high_resolution_clock::now();
 	auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-	std::cout << "Took " << (diff / 1000.0) << "ms to generate\n";
+	std::cout << "Took " << (static_cast<double>(diff) / 1000.0) << "ms to generate\n";
 
 	SDL_UnlockTexture(texture);
 }
@@ -137,13 +137,14 @@ void FractalViewer::Pan(int dx, int dy)
 {
 	Uint32* pixels = nullptr;
 	int pitch = 0;
-	SDL_LockTexture(texture, nullptr, (void**)&pixels, &pitch);
+	SDL_LockTexture(texture, nullptr, reinterpret_cast<void**>(&pixels), &pitch);
 
-	Uint32* pixels_copy = new Uint32[cl_img_buffer_size];
-	std::memcpy(pixels_copy, pixels, cl_img_buffer_size);
+	const int num_pixels = window_width * window_height;
+	std::vector<Uint32> pixels_copy(pixels, pixels + num_pixels);
 
 	int index = 0;
-	int index_y_offset = dy * window_width;
+	const int index_y_offset = dy * window_width;
+
 	for (int y = 0; y < window_height; y++)
 	{
 		for (int x = 0; x < window_width; x++)
@@ -156,8 +157,6 @@ void FractalViewer::Pan(int dx, int dy)
 			index++;
 		}
 	}
-
-	delete[] pixels_copy;
 
 	position_x += zoom * dx;
 	position_y += zoom * dy;
@@ -412,6 +411,8 @@ void FractalViewer::Run()
 					zoom /= zoom_per_scroll;
 					regenerate = true;
 					break;
+				default:
+					break;
 				}
 			}
 			else if (event.type == SDL_MOUSEWHEEL && !io.WantCaptureMouse)
@@ -422,8 +423,8 @@ void FractalViewer::Run()
 				double zoom_amount = std::pow(zoom_per_scroll, std::abs(event.wheel.y));
 				if (event.wheel.y > 0) // Mouse wheel up, zoom in
 				{
-					position_x += zoom * ((2.0 * (double)mouse_x - (double)window_width) * (1.0 - zoom_amount)) / 2.0;
-					position_y += zoom * ((2.0 * (double)mouse_y - (double)window_height) * (1.0 - zoom_amount)) / 2.0;
+					position_x += zoom * ((2.0 * static_cast<double>(mouse_x) - static_cast<double>(window_width)) * (1.0 - zoom_amount)) / 2.0;
+					position_y += zoom * ((2.0 * static_cast<double>(mouse_y) - static_cast<double>(window_height)) * (1.0 - zoom_amount)) / 2.0;
 
 					zoom *= zoom_amount;
 				}
@@ -431,8 +432,8 @@ void FractalViewer::Run()
 				{
 					zoom /= zoom_amount;
 
-					position_x -= zoom * ((2.0 * (double)mouse_x - (double)window_width) * (1.0 - zoom_amount)) / 2.0;
-					position_y -= zoom * ((2.0 * (double)mouse_y - (double)window_height) * (1.0 - zoom_amount)) / 2.0;
+					position_x -= zoom * ((2.0 * static_cast<double>(mouse_x) - static_cast<double>(window_width)) * (1.0 - zoom_amount)) / 2.0;
+					position_y -= zoom * ((2.0 * static_cast<double>(mouse_y) - static_cast<double>(window_height)) * (1.0 - zoom_amount)) / 2.0;
 				}
 
 				regenerate = true;
